@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 const DEFAULT_ENDPOINT =
-  "http://localhost:5000/api/posteditor/improve";
+  "https://cont-creator-3uvg.vercel.app/";
 
 export default function OriginalPostCard({
   initialValue = "",

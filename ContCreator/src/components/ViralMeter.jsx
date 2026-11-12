@@ -595,7 +595,7 @@ const updateViralMeterStats = async (viralScore) => {
 
     try {
       const res = await fetch(
-        "http://localhost:5000/api/viral-meter",
+        "https://cont-creator-3uvg.vercel.app/",
         {
           method: "POST",
 
