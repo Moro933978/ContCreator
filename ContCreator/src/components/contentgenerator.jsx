@@ -1,7 +1,6 @@
+
 import React, { useState, useEffect } from "react";
-
 import { motion } from "framer-motion";
-
 import { Sparkles } from "lucide-react";
 
 import {
@@ -15,6 +14,8 @@ import { auth, db } from "../firebase";
 
 import ContentForm from "./contentgenerator/ContentForm";
 import GeneratedContent from "./contentgenerator/ContentPreview";
+
+const API_URL = "https://cont-creator-3uvg.vercel.app";
 
 const ContentGenerator = () => {
   // =========================
@@ -32,11 +33,7 @@ const ContentGenerator = () => {
       const saved = localStorage.getItem("contentFormState");
       return saved ? JSON.parse(saved) : {};
     } catch (error) {
-      console.error(
-        "Failed to parse saved content form:",
-        error
-      );
-
+      console.error("Failed to parse saved content form:", error);
       return {};
     }
   };
@@ -68,8 +65,7 @@ const ContentGenerator = () => {
 
   useEffect(() => {
     try {
-      const storedIdeas =
-        localStorage.getItem("generatedIdeas");
+      const storedIdeas = localStorage.getItem("generatedIdeas");
 
       if (storedIdeas) {
         setIdeas(JSON.parse(storedIdeas));
@@ -89,22 +85,6 @@ const ContentGenerator = () => {
   // =========================
   // Save Content Generator Stats
   // =========================
-  //
-  // Every successful generation increments:
-  //
-  // postCount
-  //
-  // and:
-  //
-  // dailyActivity["YYYY-MM-DD"]
-  //
-  // Example:
-  //
-  // dailyActivity: {
-  //   "2026-09-10": 2,
-  //   "2026-09-11": 5,
-  //   "2026-09-12": 3
-  // }
 
   const updateContentGeneratorStats = async () => {
     const user = auth.currentUser;
@@ -113,7 +93,6 @@ const ContentGenerator = () => {
       console.warn(
         "No authenticated user found. Content Generator stats were not saved."
       );
-
       return;
     }
 
@@ -128,36 +107,19 @@ const ContentGenerator = () => {
 
       const now = new Date();
 
-      // Local calendar date: YYYY-MM-DD
       const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
 
-      const month = String(
-        now.getMonth() + 1
-      ).padStart(2, "0");
-
-      const day = String(
-        now.getDate()
-      ).padStart(2, "0");
-
-      const dateKey =
-        `${year}-${month}-${day}`;
+      const dateKey = `${year}-${month}-${day}`;
 
       await setDoc(
         statsRef,
         {
-          // Total generated posts
           postCount: increment(1),
-
-          // Today's generated post count
-          [`dailyActivity.${dateKey}`]:
-            increment(1),
-
-          // Last successful generation
-          lastGeneratedAt:
-            serverTimestamp(),
-
-          updatedAt:
-            serverTimestamp(),
+          [`dailyActivity.${dateKey}`]: increment(1),
+          lastGeneratedAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
         },
         {
           merge: true,
@@ -168,8 +130,6 @@ const ContentGenerator = () => {
         `Content Generator stats updated successfully for ${dateKey}.`
       );
     } catch (error) {
-      // Firestore failure must not break
-      // an already-successful generation.
       console.error(
         "Failed to update Content Generator stats:",
         error
@@ -190,21 +150,17 @@ const ContentGenerator = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/generate-content",
+        `${API_URL}/api/generate-content`,
         {
           method: "POST",
-
           headers: {
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
           },
-
           body: JSON.stringify(payload),
         }
       );
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       // =========================
       // Check API Response
@@ -212,15 +168,13 @@ const ContentGenerator = () => {
 
       if (!response.ok) {
         throw new Error(
-          data?.message ||
-            "Failed to generate content."
+          data?.message || "Failed to generate content."
         );
       }
 
       if (!data.success) {
         throw new Error(
-          data.message ||
-            "Failed to generate content."
+          data.message || "Failed to generate content."
         );
       }
 
@@ -233,20 +187,13 @@ const ContentGenerator = () => {
       // =========================
       // Count Real Generated Post
       // =========================
-      //
-      // Only successful generations
-      // are counted.
 
       await updateContentGeneratorStats();
     } catch (err) {
-      console.error(
-        "Content generation error:",
-        err
-      );
+      console.error("Content generation error:", err);
 
       setError(
-        err?.message ||
-          "An unexpected error occurred."
+        err?.message || "An unexpected error occurred."
       );
     } finally {
       setLoading(false);
@@ -265,17 +212,12 @@ const ContentGenerator = () => {
     try {
       localStorage.setItem(
         "savedIdea",
-        JSON.stringify(
-          generatedContent
-        )
+        JSON.stringify(generatedContent)
       );
 
       console.log("Saved!");
     } catch (error) {
-      console.error(
-        "Failed to save idea:",
-        error
-      );
+      console.error("Failed to save idea:", error);
     }
   };
 
@@ -288,19 +230,14 @@ const ContentGenerator = () => {
       return;
     }
 
-    await handleGenerate(
-      lastPayload
-    );
+    await handleGenerate(lastPayload);
   };
 
   // =========================
   // Debug
   // =========================
 
-  console.log(
-    "Last Payload:",
-    lastPayload
-  );
+  console.log("Last Payload:", lastPayload);
 
   // =========================
   // UI
@@ -309,9 +246,7 @@ const ContentGenerator = () => {
   return (
     <div className="relative min-h-screen bg-[#00020f] text-white p-4 md:p-8 mt-20 font-sans overflow-hidden">
 
-      {/* =========================
-          Animated Background Blobs
-      ========================= */}
+      {/* Animated Background Blobs */}
 
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
 
@@ -365,9 +300,7 @@ const ContentGenerator = () => {
 
       </div>
 
-      {/* =========================
-          Fluid Container
-      ========================= */}
+      {/* Fluid Container */}
 
       <div
         className="
@@ -384,9 +317,7 @@ const ContentGenerator = () => {
         "
       >
 
-        {/* =========================
-            Header
-        ========================= */}
+        {/* Header */}
 
         <div className="flex items-center gap-4 px-2">
 
@@ -395,19 +326,16 @@ const ContentGenerator = () => {
           <motion.img
             src="/ContentGeneratorHeaderImg.png"
             alt="Content Generator"
-
             whileHover={{
               scale: 1.08,
               rotate: -4,
               y: -2,
             }}
-
             transition={{
               type: "spring",
               stiffness: 250,
               damping: 18,
             }}
-
             className="
               w-[70px]
               h-[70px]
@@ -479,9 +407,7 @@ const ContentGenerator = () => {
 
         </div>
 
-        {/* =========================
-            Error Banner
-        ========================= */}
+        {/* Error Banner */}
 
         {error && (
           <div
@@ -502,9 +428,7 @@ const ContentGenerator = () => {
           </div>
         )}
 
-        {/* =========================
-            Main Grid
-        ========================= */}
+        {/* Main Grid */}
 
         <div
           className="
@@ -520,52 +444,26 @@ const ContentGenerator = () => {
           {/* Content Form */}
 
           <ContentForm
-            ideas={
-              ideas?.ideas || []
-            }
+            ideas={ideas?.ideas || []}
             loading={loading}
-            onGenerate={
-              handleGenerate
-            }
-            userProfile={
-              userProfile
-            }
-            currentPlatform={
-              currentPlatform
-            }
-            currentStyle={
-              currentStyle
-            }
-            setCurrentPlatform={
-              setCurrentPlatform
-            }
-            setCurrentStyle={
-              setCurrentStyle
-            }
+            onGenerate={handleGenerate}
+            userProfile={userProfile}
+            currentPlatform={currentPlatform}
+            currentStyle={currentStyle}
+            setCurrentPlatform={setCurrentPlatform}
+            setCurrentStyle={setCurrentStyle}
           />
 
           {/* Generated Content */}
 
           <GeneratedContent
-            generatedContent={
-              generatedContent
-            }
+            generatedContent={generatedContent}
             loading={loading}
-            onRegenerate={
-              handleRegenerate
-            }
-            onSaveIdea={
-              handleSaveIdea
-            }
-            selectedPlatform={
-              currentPlatform
-            }
-            selectedStyle={
-              currentStyle
-            }
-            options={
-              lastPayload?.options || {}
-            }
+            onRegenerate={handleRegenerate}
+            onSaveIdea={handleSaveIdea}
+            selectedPlatform={currentPlatform}
+            selectedStyle={currentStyle}
+            options={lastPayload?.options || {}}
           />
 
         </div>
