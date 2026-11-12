@@ -1,3 +1,4 @@
+
 import "dotenv/config";
 
 import express from "express";
@@ -12,33 +13,66 @@ import postEditorRoutes from "./routes/postEditorRout.js";
 
 const app = express();
 
-/* =========================================================
-   Middleware
-========================================================= */
+// =========================================================
+// CORS Configuration
+// =========================================================
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://cont-creator.vercel.app",
+];
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+      // Allow requests without an Origin header
+      // such as server-to-server or health checks.
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.warn("Blocked CORS origin:", origin);
+
+      return callback(new Error("Origin not allowed by CORS"));
+    },
+
     credentials: true,
+
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
   })
 );
 
+// =========================================================
+// Middleware
+// =========================================================
+
 app.use(express.json());
 
-/* =========================================================
-   Routes
-========================================================= */
+// =========================================================
+// Routes
+// =========================================================
 
 app.use("/api", aiRoutes);
 app.use("/api", contentRoutes);
 app.use("/api", viralMeterRoutes);
 
-// Post Editor
 app.use("/api/posteditor", postEditorRoutes);
 
-/* =========================================================
-   Home
-========================================================= */
+// =========================================================
+// Home
+// =========================================================
 
 app.get("/", (req, res) => {
   res.status(200).json({
@@ -47,9 +81,9 @@ app.get("/", (req, res) => {
   });
 });
 
-/* =========================================================
-   Health Check
-========================================================= */
+// =========================================================
+// Health Check
+// =========================================================
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({
@@ -59,9 +93,9 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-/* =========================================================
-   Post Editor Test
-========================================================= */
+// =========================================================
+// Post Editor Test
+// =========================================================
 
 app.get("/api/posteditor/test", (req, res) => {
   res.status(200).json({
@@ -70,9 +104,9 @@ app.get("/api/posteditor/test", (req, res) => {
   });
 });
 
-/* =========================================================
-   Test Gemini Key
-========================================================= */
+// =========================================================
+// Test Gemini Key
+// =========================================================
 
 app.get("/api/test-key", (req, res) => {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -84,16 +118,16 @@ app.get("/api/test-key", (req, res) => {
     });
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     message: "GEMINI_API_KEY loaded successfully",
     keyLength: apiKey.length,
   });
 });
 
-/* =========================================================
-   Test Gemini
-========================================================= */
+// =========================================================
+// Test Gemini
+// =========================================================
 
 app.get("/api/test-gemini", async (req, res) => {
   try {
@@ -115,23 +149,23 @@ app.get("/api/test-gemini", async (req, res) => {
       contents: "Say only Hello",
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       text: response.text || "Hello",
     });
   } catch (error) {
     console.error("Gemini Error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error?.message || "Gemini request failed",
     });
   }
 });
 
-/* =========================================================
-   404 Handler
-========================================================= */
+// =========================================================
+// 404 Handler
+// =========================================================
 
 app.use((req, res) => {
   res.status(404).json({
@@ -140,9 +174,9 @@ app.use((req, res) => {
   });
 });
 
-/* =========================================================
-   Global Error Handler
-========================================================= */
+// =========================================================
+// Global Error Handler
+// =========================================================
 
 app.use((err, req, res, next) => {
   console.error("Server Error:", err);
@@ -157,15 +191,15 @@ app.use((err, req, res, next) => {
   });
 });
 
-/* =========================================================
-   Server
-========================================================= */
+// =========================================================
+// Server
+// =========================================================
 
 const PORT = Number(process.env.PORT) || 5000;
 
 app.listen(PORT, () => {
   console.log("==========================================");
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
   console.log("==========================================");
 
   console.log(
