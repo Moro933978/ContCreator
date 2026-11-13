@@ -322,11 +322,11 @@ export default function TechookPremiumWorkspace({ bgImageUrl = "/FristPageBg.png
                         No credit card required
                     </div>
 
-                    {/* STATS BAR - ضبط التجاوبية والمسافات هنا */}
-                    <div className="w-full max-w-6xl mx-auto mt-16 mb-12 bg-[#0a0a12]/80 backdrop-blur-xl border border-white/[0.04] rounded-3xl p-6 md:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.4)] text-left">
+                    {/* STATS BAR */}
+                    {/* <div className="w-full max-w-6xl mx-auto mt-16 mb-12 bg-[#0a0a12]/80 backdrop-blur-xl border border-white/[0.04] rounded-3xl p-6 md:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.4)] text-left">
                         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
 
-                            {/* Stat 1: Active Creators */}
+                            Stat 1: Active Creators
                             <div className="flex items-start gap-4 p-2 sm:p-0">
                                 <div className="w-12 h-12 rounded-full shrink-0 bg-indigo-500/10 flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.15)]">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -349,7 +349,7 @@ export default function TechookPremiumWorkspace({ bgImageUrl = "/FristPageBg.png
                                 </div>
                             </div>
 
-                            {/* Stat 2: Content Generated */}
+                            Stat 2: Content Generated
                             <div className="flex items-start gap-4 p-2 sm:p-0">
                                 <div className="w-12 h-12 rounded-full shrink-0 bg-pink-500/10 flex items-center justify-center shadow-[0_0_15px_rgba(236,72,153,0.15)]">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -373,7 +373,7 @@ export default function TechookPremiumWorkspace({ bgImageUrl = "/FristPageBg.png
                                 </div>
                             </div>
 
-                            {/* Stat 3: Success Rate */}
+                            Stat 3: Success Rate
                             <div className="flex items-start gap-4 p-2 sm:p-0">
                                 <div className="w-12 h-12 rounded-full shrink-0 bg-purple-500/10 flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.15)]">
                                     <svg width="18" height="18" viewBox="0 0 24 24" className="drop-shadow-[0_0_8px_rgba(168,85,247,0.6)]">
@@ -393,7 +393,7 @@ export default function TechookPremiumWorkspace({ bgImageUrl = "/FristPageBg.png
                                 </div>
                             </div>
 
-                            {/* Stat 4: AI Assistance */}
+                            Stat 4: AI Assistance
                             <div className="flex items-start gap-4 p-2 sm:p-0">
                                 <div className="w-12 h-12 rounded-full shrink-0 bg-rose-500/10 flex items-center justify-center shadow-[0_0_15px_rgba(244,63,94,0.15)]">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -415,7 +415,7 @@ export default function TechookPremiumWorkspace({ bgImageUrl = "/FristPageBg.png
                             </div>
 
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* Footer Trust Section */}
                     <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6 text-[11px] sm:text-xs text-slate-400 font-medium bg-black/40 px-4 sm:px-6 py-2.5 rounded-full border border-white/10 backdrop-blur-xl max-w-full">
