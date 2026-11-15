@@ -54,7 +54,7 @@ export default async function handler(req, res) {
 
     try {
         const apiKey = process.env.GEMINI_API_KEY?.trim();
-        console.log("Checking API Key exists:", !!process.env.GEMINI_API_KEY);
+        console.log("Checking API Key exists:", !!apiKey);
 
         if (!apiKey) {
             console.error("GEMINI_API_KEY is missing.");
@@ -63,29 +63,30 @@ export default async function handler(req, res) {
             });
         }
 
-        const { chatHistory = [], newUserMessage = "" } = req.body || {};
+        // تحصين قراءة الـ Body لضمان استقبال البيانات بشكل صحيح دائماً
+        let body = req.body;
+        if (typeof body === "string") {
+            try { body = JSON.parse(body); } catch (e) { body = {}; }
+        }
+        body = body || {};
 
-        if (
-            !Array.isArray(chatHistory) ||
-            typeof newUserMessage !== "string" ||
-            !newUserMessage.trim()
-        ) {
+        const chatHistory = Array.isArray(body.chatHistory) ? body.chatHistory : [];
+        const newUserMessage = (body.newUserMessage || body.message || "").trim();
+
+        console.log("Received newUserMessage:", newUserMessage);
+
+        if (!newUserMessage) {
             return res.status(400).json({
-                error: "Invalid chat request.",
+                error: "Message cannot be empty.",
             });
         }
 
         const ai = new GoogleGenAI({ apiKey });
-        
         const contents = [];
 
-        // Build Gemini conversation history.
+        // بناء تاريخ المحادثة
         for (const msg of chatHistory.slice(-30)) {
-            if (
-                !msg ||
-                typeof msg.content !== "string" ||
-                !msg.content.trim()
-            ) {
+            if (!msg || typeof msg.content !== "string" || !msg.content.trim()) {
                 continue;
             }
 
@@ -98,29 +99,32 @@ export default async function handler(req, res) {
             const previous = contents[contents.length - 1];
 
             if (previous && previous.role === role) {
-                previous.parts[0].text += "\n" + msg.content;
+                previous.parts[0].text += "\n" + msg.content.trim();
             } else {
                 contents.push({
                     role,
-                    parts: [{ text: msg.content }],
+                    parts: [{ text: msg.content.trim() }],
                 });
             }
         }
 
-        // Append the new user message.
+        // إضافة رسالة المستخدم الجديدة وضمان عدم إرسال مصفوفة فارغة أبداً
         const lastMessage = contents[contents.length - 1];
 
         if (lastMessage?.role === "user") {
-            lastMessage.parts[0].text += "\n" + newUserMessage.trim();
+            lastMessage.parts[0].text += "\n" + newUserMessage;
         } else {
             contents.push({
                 role: "user",
-                parts: [{ text: newUserMessage.trim() }],
+                parts: [{ text: newUserMessage }],
             });
         }
 
+        console.log("Final contents sent to Gemini:", contents.length);
+
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash", 
+            model: "gemini-3.8-flash", // <-- رجّعها لـ 3.8-flash زي ما جوجل طلبت
+            contents,
             config: {
                 temperature: 0.8,
                 topP: 0.95,
@@ -128,7 +132,6 @@ export default async function handler(req, res) {
                 systemInstruction: SYSTEM_INSTRUCTION,
             },
         });
-
         const text = response.text;
 
         if (!text) {
@@ -140,9 +143,9 @@ export default async function handler(req, res) {
         return res.status(200).json({ text });
 
     } catch (error) {
-        console.error("Gemini Backend Error:", error);
+        console.error("Gemini Backend Error Details:", error);
         return res.status(500).json({
-            error: "Unable to generate a response. Please try again.",
+            error: error.message || "Unable to generate a response. Please try again.",
         });
     }
 }

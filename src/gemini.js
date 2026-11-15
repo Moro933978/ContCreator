@@ -1,5 +1,4 @@
-// src/gemini.js
-
+// src/gemini.js (Frontend Helper)
 export async function sendChatMessage(chatHistory, newUserMessage) {
     try {
         const response = await fetch('/api/chat', {
@@ -21,7 +20,7 @@ export async function sendChatMessage(chatHistory, newUserMessage) {
 
         return data.text;
     } catch (error) {
-        console.error('Gemini Frontend Error:', error);
+        console.error("Frontend Gemini Error:", error);
         throw error;
     }
 }
