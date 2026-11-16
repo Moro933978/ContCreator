@@ -47,29 +47,19 @@ IMPORTANT:
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
-        return res.status(405).json({
-            error: "Method not allowed",
-        });
+        return res.status(405).json({ error: "Method not allowed" });
     }
 
     try {
         const apiKey = process.env.GEMINI_API_KEY?.trim();
 
         if (!apiKey) {
-            console.error("GEMINI_API_KEY is missing.");
-            return res.status(500).json({
-                error: "Server API configuration is missing.",
-            });
+            return res.status(500).json({ error: "Server API configuration is missing." });
         }
 
-        // Safely parse request body
         let body = req.body;
         if (typeof body === "string") {
-            try {
-                body = JSON.parse(body);
-            } catch (e) {
-                body = {};
-            }
+            try { body = JSON.parse(body); } catch { body = {}; }
         }
         body = body || {};
 
@@ -77,63 +67,41 @@ export default async function handler(req, res) {
         const newUserMessage = (body.newUserMessage || body.message || "").trim();
 
         if (!newUserMessage) {
-            return res.status(400).json({
-                error: "Message cannot be empty.",
-            });
+            return res.status(400).json({ error: "Message cannot be empty." });
         }
 
         const ai = new GoogleGenAI({ apiKey });
         const contents = [];
 
-        // Keep only the last 12 messages to maintain context while reducing latency
-        for (const msg of chatHistory.slice(-12)) {
-            if (!msg || typeof msg.content !== "string" || !msg.content.trim()) {
-                continue;
-            }
-
+        // Keep last 10 messages for maximum speed
+        for (const msg of chatHistory.slice(-10)) {
+            if (!msg || typeof msg.content !== "string" || !msg.content.trim()) continue;
             const role = msg.role === "assistant" ? "model" : "user";
-
-            // Ensure conversation starts with a user message
-            if (contents.length === 0 && role === "model") {
-                continue;
-            }
+            if (contents.length === 0 && role === "model") continue;
 
             const previous = contents[contents.length - 1];
-
-            // Merge consecutive messages from the same role
             if (previous && previous.role === role) {
                 previous.parts[0].text += "\n" + msg.content.trim();
             } else {
-                contents.push({
-                    role,
-                    parts: [{ text: msg.content.trim() }],
-                });
+                contents.push({ role, parts: [{ text: msg.content.trim() }] });
             }
         }
 
-        // Append the latest user message
         const lastMessage = contents[contents.length - 1];
-
         if (lastMessage?.role === "user") {
             lastMessage.parts[0].text += "\n" + newUserMessage;
         } else {
-            contents.push({
-                role: "user",
-                parts: [{ text: newUserMessage }],
-            });
+            contents.push({ role: "user", parts: [{ text: newUserMessage }] });
         }
 
-        // Generate response with thinking disabled for fast replies
         const response = await ai.models.generateContent({
-            model: "gemini-3.8-flash",
+            model: "gemini-2.5-flash",
             contents,
             config: {
-                temperature: 0.8,
-                topP: 0.95,
-                maxOutputTokens: 1200,
-                thinkingConfig: {
-                    thinkingBudget: 0,
-                },
+                temperature: 0.7,
+                topP: 0.9,
+                maxOutputTokens: 1024,
+                thinkingConfig: { thinkingBudget: 0 },
                 systemInstruction: SYSTEM_INSTRUCTION,
             },
         });
@@ -141,17 +109,15 @@ export default async function handler(req, res) {
         const text = response.text;
 
         if (!text) {
-            return res.status(502).json({
-                error: "Gemini returned an empty response.",
-            });
+            return res.status(502).json({ error: "Empty response from AI." });
         }
 
         return res.status(200).json({ text });
 
     } catch (error) {
-        console.error("Gemini Backend Error Details:", error);
+        console.error("Gemini API Error:", error);
         return res.status(500).json({
-            error: error.message || "Unable to generate a response. Please try again.",
+            error: error.message || "Unable to generate a response.",
         });
     }
 }

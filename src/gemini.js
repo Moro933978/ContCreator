@@ -11,34 +11,16 @@ export async function sendChatMessage(chatHistory, newUserMessage, onChunk, sign
         signal,
     });
 
+    const data = await response.json().catch(() => ({}));
+
     if (!response.ok) {
-        let errorMsg = "Failed to connect to AI server.";
-        try {
-            const errData = await response.json();
-            if (errData.error) errorMsg = errData.error;
-        } catch {}
-        throw new Error(errorMsg);
+        throw new Error(data.error || `Server error (${response.status})`);
     }
 
-    if (!response.body) {
-        throw new Error("ReadableStream not supported in this browser.");
+    const text = data.text || "";
+    if (onChunk && text) {
+        onChunk(text);
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-    let fullText = "";
-
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        fullText += chunk;
-
-        if (onChunk) {
-            onChunk(fullText);
-        }
-    }
-
-    return fullText;
+    return text;
 }
