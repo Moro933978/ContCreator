@@ -1,7 +1,6 @@
-
 import { GoogleGenAI } from "@google/genai";
 
-const MODEL_NAME = "gemini-3.8-flash";
+const MODELS_TO_TRY = ["gemini-2.5-flash", "gemini-2.5-pro"];
 const MAX_HISTORY_MESSAGES = 8;
 const MAX_MESSAGE_LENGTH = 6000;
 
@@ -25,8 +24,8 @@ STYLE:
 
 EXPERTISE:
 - You specialize in YouTube, TikTok, Instagram Reels,
-  viral video ideas, hooks, scripts, content strategy,
-  audience growth, and creator tools.
+viral video ideas, hooks, scripts, content strategy,
+audience growth, and creator tools.
 
 IMPORTANT:
 - Never claim to be Google, Gemini, OpenAI, or ChatGPT.
@@ -97,7 +96,6 @@ export default async function handler(req, res) {
     }
 
     const startTime = Date.now();
-    let streamStarted = false;
 
     try {
         const apiKey = process.env.GEMINI_API_KEY?.trim();
@@ -154,7 +152,37 @@ export default async function handler(req, res) {
 
         const ai = new GoogleGenAI({ apiKey });
 
-        // Configure Server-Sent Events.
+        // Try multiple models in order to bypass 503 High Demand errors BEFORE opening the stream
+        let responseStream = null;
+        let lastError = null;
+
+        for (const model of MODELS_TO_TRY) {
+            try {
+                responseStream = await ai.models.generateContentStream({
+                    model: model,
+                    contents,
+                    config: {
+                        systemInstruction: SYSTEM_INSTRUCTION,
+                        temperature: 0.7,
+                        maxOutputTokens: 600,
+                        automaticContinuation: false
+                    }
+                });
+                if (responseStream) {
+                    console.log(`Successfully connected using model: ${model}`);
+                    break;
+                }
+            } catch (err) {
+                console.warn(`Model ${model} failed (likely 503 high demand), trying next...`, err.message);
+                lastError = err;
+            }
+        }
+
+        if (!responseStream) {
+            throw lastError || new Error("All Gemini models are currently busy or unavailable.");
+        }
+
+        // Configure Server-Sent Events AFTER successfully obtaining the stream
         res.setHeader(
             "Content-Type",
             "text/event-stream; charset=utf-8"
@@ -170,24 +198,10 @@ export default async function handler(req, res) {
             res.flushHeaders();
         }
 
-        streamStarted = true;
-
-        // Start actual Gemini streaming.
-        const responseStream = await ai.models.generateContentStream({
-            model: MODEL_NAME,
-            contents,
-            config: {
-                systemInstruction: SYSTEM_INSTRUCTION,
-                temperature: 0.7,
-                maxOutputTokens: 600,
-                automaticContinuation: false
-            }
-        });
-
         let firstChunk = true;
 
         for await (const chunk of responseStream) {
-            if (res.destroyed) {
+            if (res.destroyed || res.writableEnded) {
                 break;
             }
 
@@ -209,7 +223,7 @@ export default async function handler(req, res) {
             }
         }
 
-        if (!res.destroyed) {
+        if (!res.destroyed && !res.writableEnded) {
             res.write("data: [DONE]\n\n");
             res.end();
         }
@@ -223,23 +237,26 @@ export default async function handler(req, res) {
     } catch (error) {
         console.error("Gemini Streaming Error:", error);
 
-        if (!streamStarted || !res.headersSent) {
-            return res.status(500).json({
-                error: "Unable to generate a response.",
-                details:
-                    process.env.NODE_ENV === "development"
-                        ? error.message
-                        : undefined
+        // إذا لم يتم إرسال الـ headers بعد، نرسل رد JSON طبيعي
+        if (!res.headersSent) {
+            return res.status(503).json({
+                error: "The AI models are currently experiencing high demand. Please try again in a moment.",
+                details: process.env.NODE_ENV === "development" ? error.message : undefined
             });
         }
 
-        if (!res.destroyed) {
-            res.write(
-                `data: ${JSON.stringify({
-                    error: "The response was interrupted. Please try again."
-                })}\n\n`
-            );
-            res.end();
+        // إذا كانت الـ headers قد أُرسلت وتم فتح الـ Stream، نتحقق أن الاتصال متاح قبل الكتابة لمنع انهيار libuv
+        if (!res.destroyed && res.writableEnded === false) {
+            try {
+                res.write(
+                    `data: ${JSON.stringify({
+                        error: "The response was interrupted. Please try again."
+                    })}\n\n`
+                );
+                res.end();
+            } catch (writeErr) {
+                console.error("Error writing failure chunk to stream:", writeErr);
+            }
         }
     }
 }
