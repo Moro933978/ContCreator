@@ -1,6 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
 
-const MODELS_TO_TRY = ["gemini-2.5-flash", "gemini-2.5-pro"];
+const MODELS_TO_TRY = [
+  "gemini-2.5-flash",
+  "gemini-3.5-flash",
+  "gemini-2.5-pro"
+];
+
 const MAX_HISTORY_MESSAGES = 8;
 const MAX_MESSAGE_LENGTH = 6000;
 
