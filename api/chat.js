@@ -54,7 +54,6 @@ export default async function handler(req, res) {
 
     try {
         const apiKey = process.env.GEMINI_API_KEY?.trim();
-        console.log("Checking API Key exists:", !!apiKey);
 
         if (!apiKey) {
             console.error("GEMINI_API_KEY is missing.");
@@ -63,17 +62,19 @@ export default async function handler(req, res) {
             });
         }
 
-        // تحصين قراءة الـ Body لضمان استقبال البيانات بشكل صحيح دائماً
+        // Safely parse request body
         let body = req.body;
         if (typeof body === "string") {
-            try { body = JSON.parse(body); } catch (e) { body = {}; }
+            try {
+                body = JSON.parse(body);
+            } catch (e) {
+                body = {};
+            }
         }
         body = body || {};
 
         const chatHistory = Array.isArray(body.chatHistory) ? body.chatHistory : [];
         const newUserMessage = (body.newUserMessage || body.message || "").trim();
-
-        console.log("Received newUserMessage:", newUserMessage);
 
         if (!newUserMessage) {
             return res.status(400).json({
@@ -84,20 +85,22 @@ export default async function handler(req, res) {
         const ai = new GoogleGenAI({ apiKey });
         const contents = [];
 
-        // بناء تاريخ المحادثة
-        for (const msg of chatHistory.slice(-30)) {
+        // Keep only the last 12 messages to maintain context while reducing latency
+        for (const msg of chatHistory.slice(-12)) {
             if (!msg || typeof msg.content !== "string" || !msg.content.trim()) {
                 continue;
             }
 
             const role = msg.role === "assistant" ? "model" : "user";
 
+            // Ensure conversation starts with a user message
             if (contents.length === 0 && role === "model") {
                 continue;
             }
 
             const previous = contents[contents.length - 1];
 
+            // Merge consecutive messages from the same role
             if (previous && previous.role === role) {
                 previous.parts[0].text += "\n" + msg.content.trim();
             } else {
@@ -108,7 +111,7 @@ export default async function handler(req, res) {
             }
         }
 
-        // إضافة رسالة المستخدم الجديدة وضمان عدم إرسال مصفوفة فارغة أبداً
+        // Append the latest user message
         const lastMessage = contents[contents.length - 1];
 
         if (lastMessage?.role === "user") {
@@ -120,18 +123,21 @@ export default async function handler(req, res) {
             });
         }
 
-        console.log("Final contents sent to Gemini:", contents.length);
-
+        // Generate response with thinking disabled for fast replies
         const response = await ai.models.generateContent({
-            model: "gemini-3.8-flash", // <-- رجّعها لـ 3.8-flash زي ما جوجل طلبت
+            model: "gemini-3.8-flash",
             contents,
             config: {
                 temperature: 0.8,
                 topP: 0.95,
-                maxOutputTokens: 2048,
+                maxOutputTokens: 1200,
+                thinkingConfig: {
+                    thinkingBudget: 0,
+                },
                 systemInstruction: SYSTEM_INSTRUCTION,
             },
         });
+
         const text = response.text;
 
         if (!text) {
