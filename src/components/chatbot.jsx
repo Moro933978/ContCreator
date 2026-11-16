@@ -395,7 +395,7 @@ export default function ContentCreatorBot({ onClose }) {
     const isEmptyState = messages.length === 0 || (messages.length === 1 && messages[0].content.includes('Welcome'));
 
     return (
-        <div className="fixed inset-0 w-screen h-screen bg-[#06060a] text-[#f4f4f6] flex overflow-hidden font-sans antialiased z-50 selection:bg-purple-500/30 selection:text-purple-200">
+        <div className="fixed inset-0 w-screen h-screen bg-[#06060a] text-[#f4f4f6] flex overflow-hidden font-sans antialiased z-50 ">
             {/* Ambient Glow & Subtle Grid */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(147,51,234,0.14),_transparent_55%)] pointer-events-none" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_85%,_rgba(59,130,246,0.08),_transparent_45%)] pointer-events-none" />
@@ -439,7 +439,7 @@ export default function ContentCreatorBot({ onClose }) {
 
                                 <button
                                     onClick={handleNewChat}
-                                    className="w-full py-2.5 px-4 rounded-xl text-white text-xs font-semibold tracking-wide flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 border border-purple-400/20 transition-all shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:shadow-[0_0_25px_rgba(147,51,234,0.45)] active:scale-[0.98]"
+                                    className="w-full py-2.5 px-4 rounded-xl text-white text-xs font-semibold tracking-wide flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 transition-all shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:shadow-[0_0_25px_rgba(147,51,234,0.45)] active:scale-[0.98]"
                                 >
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" /></svg>
                                     New Session
