@@ -12,15 +12,16 @@ export const generateIdeas = async (req, res) => {
   console.log("🔥 generateIdeas called");
 
   try {
-    const keysToTry = [
-      process.env.GEMINI_API_KEY,
-      process.env.CONTENT_GENERATOR,
-    ].filter(Boolean);
+    const attempts = [
+      { key: process.env.GEMINI_API_KEY, model: "gemini-3.8-flash" },
+      { key: process.env.GEMINI_API_KEY, model: "gemini-2.5-flash" },
+      { key: process.env.GEMINI_API_KEY, model: "gemini-2.5-flash" },
+    ].filter((item) => Boolean(item.key));
 
-    if (keysToTry.length === 0) {
+    if (attempts.length === 0) {
       return res.status(500).json({
         success: false,
-        message: "GEMINI_API_KEY not found",
+        message: "No API keys found in environment variables",
       });
     }
 
@@ -116,12 +117,12 @@ JSON SCHEMA:
     let response;
     let lastError;
 
-    for (const currentKey of keysToTry) {
+    for (const attempt of attempts) {
       try {
-        const currentAi = new GoogleGenAI({ apiKey: currentKey });
+        const currentAi = new GoogleGenAI({ apiKey: attempt.key });
         response = await withTimeout(
           currentAi.models.generateContent({
-            model: "gemini-3.8-flash",
+            model: attempt.model,
             contents: prompt,
             config: {
               responseMimeType: "application/json",
@@ -129,20 +130,19 @@ JSON SCHEMA:
               thinkingConfig: { thinkingBudget: 0 },
             },
           }),
-          25000
+          20000
         );
         break;
       } catch (e) {
         lastError = e;
-        console.warn("Attempt failed, trying fallback...", e?.message);
+        console.warn(`Failed [${attempt.model}]:`, e?.message);
       }
     }
 
     if (!response) {
       return res.status(503).json({
         success: false,
-        message: "Gemini servers are temporarily busy. Please click Generate again.",
-        error: lastError?.message,
+        message: lastError?.message || "All Gemini attempts failed",
       });
     }
 
