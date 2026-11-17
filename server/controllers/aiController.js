@@ -189,8 +189,9 @@ Before rendering the JSON, execute an internal validation loop to guarantee:
 
         const modelsToTry = [
             "gemini-3.8-flash",
-            "gemini-3.8-flash-lite",
-            "gemini-3.8-flash", 
+            "gemini-3.8-pro",
+            "gemini-2.5-flash",
+            "gemini-2.0-flash",
         ];
 
         let response;
