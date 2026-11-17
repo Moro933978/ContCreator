@@ -1,4 +1,3 @@
-
 import "dotenv/config";
 
 import express from "express";
@@ -22,37 +21,22 @@ const allowedOrigins = [
   "https://cont-creator.vercel.app",
 ];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests without an Origin header
-      // such as server-to-server or health checks.
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-      console.warn("Blocked CORS origin:", origin);
+    console.warn("Blocked CORS origin:", origin);
+    return callback(new Error("Origin not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 
-      return callback(new Error("Origin not allowed by CORS"));
-    },
-
-    credentials: true,
-
-    methods: [
-      "GET",
-      "POST",
-      "PUT",
-      "PATCH",
-      "DELETE",
-      "OPTIONS",
-    ],
-
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-    ],
-  })
-);
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 // =========================================================
 // Middleware
@@ -67,7 +51,6 @@ app.use(express.json());
 app.use("/api", aiRoutes);
 app.use("/api", contentRoutes);
 app.use("/api", viralMeterRoutes);
-
 app.use("/api/posteditor", postEditorRoutes);
 
 // =========================================================
@@ -145,7 +128,7 @@ app.get("/api/test-gemini", async (req, res) => {
     });
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.8-flash",
       contents: "Say only Hello",
     });
 
@@ -192,21 +175,17 @@ app.use((err, req, res, next) => {
 });
 
 // =========================================================
-// Server
+// Server (Local vs Vercel Serverless)
 // =========================================================
 
-const PORT = Number(process.env.PORT) || 5000;
+if (!process.env.VERCEL) {
+  const PORT = Number(process.env.PORT) || 5000;
 
-app.listen(PORT, () => {
-  console.log("==========================================");
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log("==========================================");
+  app.listen(PORT, () => {
+    console.log("==========================================");
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log("==========================================");
+  });
+}
 
-  console.log(
-    process.env.GEMINI_API_KEY
-      ? "✅ GEMINI_API_KEY Loaded"
-      : "❌ GEMINI_API_KEY NOT Found"
-  );
-
-  console.log("==========================================");
-});
+export default app;
