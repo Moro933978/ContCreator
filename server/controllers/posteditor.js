@@ -120,16 +120,18 @@ Return ONLY the JSON object.
 };
 
 /* =========================================================
-   Call Gemini with Modern Models Only (gemini-3.8-flash)
+   Call Gemini with Smart Retry & Fallback for 503 Errors
 ========================================================= */
 
 const callGeminiAI = async (prompt) => {
   const primaryKey = process.env.Post_Editor || process.env.GEMINI_API_KEY || process.env.VIRAL_METER_API;
   const backupKey = process.env.GEMINI_API_KEY || primaryKey;
 
+  // محاولات متعددة مع إعادة المحاولة التلقائية لو حصل ضغط (503)
   const attempts = [
     { key: primaryKey, model: "gemini-3.8-flash" },
     { key: backupKey, model: "gemini-3.8-flash" },
+    { key: primaryKey, model: "gemini-3.8-flash" }, // محاولة تالتة إضافية للضغط
   ].filter((item) => Boolean(item.key));
 
   if (attempts.length === 0) {
@@ -139,7 +141,8 @@ const callGeminiAI = async (prompt) => {
   let response;
   let lastError;
 
-  for (const attempt of attempts) {
+  for (let i = 0; i < attempts.length; i++) {
+    const attempt = attempts[i];
     try {
       const ai = new GoogleGenAI({ apiKey: attempt.key });
       response = await withTimeout(
@@ -152,17 +155,19 @@ const callGeminiAI = async (prompt) => {
             thinkingConfig: { thinkingBudget: 0 },
           },
         }),
-        45000
+        50000 // 50 ثانية مهلة لكل محاولة
       );
-      break;
+      if (response) break;
     } catch (e) {
       lastError = e;
-      console.warn(`PostEditor attempt on [${attempt.model}] failed:`, e?.message);
+      console.warn(`PostEditor attempt ${i + 1} failed:`, e?.message);
+      // انتظار 1.5 ثانية قبل إعادة المحاولة لتخفيف الضغط
+      await new Promise((resolve) => setTimeout(resolve, 1500));
     }
   }
 
   if (!response) {
-    throw new Error(lastError?.message || "Gemini servers are busy. Please try again.");
+    throw new Error(lastError?.message || "Gemini servers are busy due to high demand. Please try again in a moment.");
   }
 
   const content = typeof response?.text === "string" ? response.text.trim() : "";
