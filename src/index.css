@@ -1391,7 +1391,7 @@ select:-webkit-autofill {
       min-height: 100vh;
       position: relative;
       overflow: hidden;
-      padding-top: 25px;
+      padding-top: 40px;
     }
 
     .bg-glow {
