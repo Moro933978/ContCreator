@@ -14,7 +14,7 @@ export const generateIdeas = async (req, res) => {
   try {
     const attempts = [
       { key: process.env.GEMINI_API_KEY, model: "gemini-3.8-flash" },
-      { key: process.env.GEMINI_API_KEY, model: "gemini-2.5-flash" },
+      { key: process.env.CONTENT_GENERATOR, model: "gemini-2.5-flash" },
       { key: process.env.GEMINI_API_KEY, model: "gemini-2.5-flash" },
     ].filter((item) => Boolean(item.key));
 
