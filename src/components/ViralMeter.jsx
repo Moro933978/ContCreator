@@ -400,7 +400,7 @@ export default function ViralMeterDashboard() {
 
   return (
     <div className="min-h-screen bg-[#00020f] text-white p-3 sm:p-4 md:p-6 lg:p-8 font-sans py-10 flex justify-center selection:bg-purple-500/30 overflow-x-hidden">
-      <div className="w-full max-w-[1500px] flex flex-col py-10 gap-4 sm:gap-6">
+      <div className="w-full max-w-[1500px] flex flex-col py-15 gap-4 sm:gap-6">
         {/* TOP SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-[560px_1fr] xl:grid-cols-[600px_1fr] gap-4 sm:gap-6 items-stretch">
           {/* LEFT COLUMN */}
