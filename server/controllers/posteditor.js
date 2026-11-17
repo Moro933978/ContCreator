@@ -120,7 +120,7 @@ Return ONLY the JSON object.
 };
 
 /* =========================================================
-   Call Gemini with Multi-Model Fallback
+   Call Gemini with Modern Models Only (gemini-3.8-flash)
 ========================================================= */
 
 const callGeminiAI = async (prompt) => {
@@ -129,8 +129,7 @@ const callGeminiAI = async (prompt) => {
 
   const attempts = [
     { key: primaryKey, model: "gemini-3.8-flash" },
-    { key: backupKey, model: "gemini-2.5-flash" },
-    { key: primaryKey, model: "gemini-2.5-flash" },
+    { key: backupKey, model: "gemini-3.8-flash" },
   ].filter((item) => Boolean(item.key));
 
   if (attempts.length === 0) {
