@@ -1,15 +1,17 @@
 import { GoogleGenAI } from "@google/genai";
 
-
-
 export const analyzeViralContent = async (req, res) => {
     try {
+        const apiKey = process.env.VIRAL_METER_API || process.env.GEMINI_API_KEY;
+        
+        if (!apiKey) {
+            return res.status(500).json({
+                success: false,
+                message: "VIRAL_METER_API or GEMINI_API_KEY is missing in environment variables."
+            });
+        }
 
-        const ai = new GoogleGenAI({
-            apiKey: process.env.VIRAL_METER_API,
-        });
-
-        console.log(process.env.VIRAL_METER_API);
+        const ai = new GoogleGenAI({ apiKey });
 
         const {
             content, 
@@ -54,65 +56,60 @@ Predict the following:
 10. Engagement Timeline
 11. 4 Content Insights
 
-Return ONLY JSON.
+Return ONLY a single valid JSON object. No markdown (\`\`\`json).
 
 Format:
-
 {
-  "viralScore":87,
-  "engagementRate":8.7,
-  "predictedViews":125000,
-  "predictedLikes":8420,
-  "predictedShares":2150,
-  "predictedSubscribers":1250,
-  "predictedDislikes":320,
-
-  "sentiment":{
-      "positive":87,
-      "neutral":8,
-      "negative":5
+  "viralScore": 87,
+  "engagementRate": 8.7,
+  "predictedViews": 125000,
+  "predictedLikes": 8420,
+  "predictedShares": 2150,
+  "predictedSubscribers": 1250,
+  "predictedDislikes": 320,
+  "sentiment": {
+      "positive": 87,
+      "neutral": 8,
+      "negative": 5
   },
-
-  "timeline":[
-      {"time":"0h","value":2000},
-      {"time":"6h","value":6500},
-      {"time":"12h","value":9000},
-      {"time":"18h","value":10500},
-      {"time":"24h","value":12500},
-      {"time":"48h","value":13500},
-      {"time":"72h","value":14500},
-      {"time":"1 Week","value":19000}
+  "timeline": [
+      {"time": "0h", "value": 2000},
+      {"time": "6h", "value": 6500},
+      {"time": "12h", "value": 9000},
+      {"time": "18h", "value": 10500},
+      {"time": "24h", "value": 12500},
+      {"time": "48h", "value": 13500},
+      {"time": "72h", "value": 14500},
+      {"time": "1 Week", "value": 19000}
   ],
-
-  "platformBreakdown":[
+  "platformBreakdown": [
       {
-          "name":"YouTube",
-          "percentage":65,
-          "views":81200
+          "name": "YouTube",
+          "percentage": 65,
+          "views": 81200
       },
       {
-          "name":"Instagram",
-          "percentage":15,
-          "views":18700
+          "name": "Instagram",
+          "percentage": 15,
+          "views": 18700
       },
       {
-          "name":"TikTok",
-          "percentage":10,
-          "views":12500
+          "name": "TikTok",
+          "percentage": 10,
+          "views": 12500
       },
       {
-          "name":"Facebook",
-          "percentage":7,
-          "views":8700
+          "name": "Facebook",
+          "percentage": 7,
+          "views": 8700
       },
       {
-          "name":"LinkedIn",
-          "percentage":3,
-          "views":3700
+          "name": "LinkedIn",
+          "percentage": 3,
+          "views": 3700
       }
   ],
-
-  "insights":[
+  "insights": [
       "Strong Hook",
       "High Replay Potential",
       "Great Topic",
@@ -121,34 +118,32 @@ Format:
 }
 `;
 
-
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            model: "gemini-3.8-flash",
             contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                temperature: 0.7,
+                thinkingConfig: { thinkingBudget: 0 },
+            },
         });
 
-        let text = response.text;
+        const rawText = response.text || "{}";
+        const cleanedText = rawText.replace(/```json|```/g, "").trim();
 
-        text = text
-            .replace(/```json/g, "")
-            .replace(/```/g, "")
-            .trim();
+        const data = JSON.parse(cleanedText);
 
-        const data = JSON.parse(text);
-
-        res.json({
+        return res.status(200).json({
             success: true,
             data
         });
 
     } catch (err) {
+        console.error("Viral Meter Controller Error:", err);
 
-        console.error(err);
-
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
-            message: err.message
+            message: err.message || "Internal Server Error"
         });
-
     }
 };
