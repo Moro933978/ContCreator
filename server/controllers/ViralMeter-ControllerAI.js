@@ -1,17 +1,30 @@
 import { GoogleGenAI } from "@google/genai";
 
+const withTimeout = (promise, ms) =>
+  Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Request timed out")), ms)
+    ),
+  ]);
+
 export const analyzeViralContent = async (req, res) => {
     try {
-        const apiKey = process.env.VIRAL_METER_API || process.env.GEMINI_API_KEY;
-        
-        if (!apiKey) {
+        const primaryKey = process.env.VIRAL_METER_API || process.env.GEMINI_API_KEY;
+        const backupKey = process.env.CONTENT_GENERATOR || primaryKey;
+
+        const attempts = [
+            { key: primaryKey, model: "gemini-3.8-flash" },
+            { key: backupKey, model: "gemini-2.5-flash" },
+            { key: primaryKey, model: "gemini-2.5-flash" },
+        ].filter((item) => Boolean(item.key));
+
+        if (attempts.length === 0) {
             return res.status(500).json({
                 success: false,
-                message: "VIRAL_METER_API or GEMINI_API_KEY is missing in environment variables."
+                message: "No API keys found in environment variables."
             });
         }
-
-        const ai = new GoogleGenAI({ apiKey });
 
         const {
             content, 
@@ -118,15 +131,37 @@ Format:
 }
 `;
 
-        const response = await ai.models.generateContent({
-            model: "gemini-3.8-flash",
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                temperature: 0.7,
-                thinkingConfig: { thinkingBudget: 0 },
-            },
-        });
+        let response;
+        let lastError;
+
+        for (const attempt of attempts) {
+            try {
+                const currentAi = new GoogleGenAI({ apiKey: attempt.key });
+                response = await withTimeout(
+                    currentAi.models.generateContent({
+                        model: attempt.model,
+                        contents: prompt,
+                        config: {
+                            responseMimeType: "application/json",
+                            temperature: 0.7,
+                            thinkingConfig: { thinkingBudget: 0 },
+                        },
+                    }),
+                    20000
+                );
+                break;
+            } catch (e) {
+                lastError = e;
+                console.warn(`ViralMeter attempt on [${attempt.model}] failed:`, e?.message);
+            }
+        }
+
+        if (!response) {
+            return res.status(503).json({
+                success: false,
+                message: lastError?.message || "Gemini servers are busy. Please try again."
+            });
+        }
 
         const rawText = response.text || "{}";
         const cleanedText = rawText.replace(/```json|```/g, "").trim();
