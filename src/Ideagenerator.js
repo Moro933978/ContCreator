@@ -1,16 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
 
 export default async function handler(req, res) {
-    // التأكد إن الطلب القادم هو POST فقط
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    // استلام البيانات من الواجهة
     const { channelName, niche, targetAudience, platforms, count = 20 } = req.body;
 
     try {
-        // 1. التهيئة الصحيحة للمكتبة الجديدة
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
         const prompt = `

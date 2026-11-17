@@ -140,7 +140,7 @@ export default function Navbar() {
   `;
 
   return (
-    <nav className="fixed left-0  right-0 top-2.5 z-50 w-full px-2.5 sm:px-4 lg:px-6">
+    <nav className="fixed left-0 right-0 top-2.5 z-50 w-full px-2.5 sm:px-4 lg:px-6">
       {/* =====================================================
           Main Navbar
       ===================================================== */}

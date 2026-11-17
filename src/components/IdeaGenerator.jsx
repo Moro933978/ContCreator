@@ -285,9 +285,8 @@ const IdeaGenerator = () => {
                 // Backend request
                 // ------------------------------------------------
 
-                const response =
-                    await fetch(
-                        "https://cont-creator-3uvg.vercel.app/",
+                const response = await fetch(
+                    "https://cont-creator-3uvg.vercel.app/api/generate-ideas",
                         {
                             method: "POST",
                             headers: {
