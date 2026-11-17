@@ -79,7 +79,6 @@ const AudienceSentiment = ({ loading = false, result = null }) => {
     statusColor = "text-green-400 bg-green-500/10 border-green-500/20";
   }
 
-  // تجهيز بيانات المشاعر وألوانها
   const sentimentsList = hasResult ? [
     { 
       id: "positive", 
@@ -119,7 +118,6 @@ const AudienceSentiment = ({ loading = false, result = null }) => {
     },
   ] : [];
 
-  // تحديد القيمة الأعلى علشان الدائرة تاخد لونها وايقونتها واسمها
   const dominantSentiment = hasResult 
     ? [...sentimentsList].sort((a, b) => b.value - a.value)[0] 
     : null;
@@ -135,7 +133,7 @@ const AudienceSentiment = ({ loading = false, result = null }) => {
         shadow-[0_20px_60px_rgba(124,58,237,0.08)]
       "
     >
-      {/* BACKGROUND GRADIENTS & GLOWS (نفس الاستايل الأصلي) */}
+      {/* BACKGROUND GRADIENTS & GLOWS */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#171034] via-[#100B27] to-[#080615] pointer-events-none" />
       <div className="absolute -top-32 -left-32 w-80 h-80 rounded-full bg-purple-600/10 blur-[120px] pointer-events-none" />
       <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-blue-600/10 blur-[120px] pointer-events-none" />
@@ -251,10 +249,8 @@ const AudienceSentiment = ({ loading = false, result = null }) => {
               transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
               className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-14 w-full"
             >
-              {/* الدائرة بتشكل ولون أعلى نسبة */}
               <DominantDonut dominant={dominantSentiment} />
               
-              {/* البارات الجانبية */}
               <ResultBars items={sentimentsList} />
             </motion.div>
           )}
@@ -303,21 +299,18 @@ const LoadingPhrases = () => {
   );
 };
 
-// الدائرة الرئيسية باللون والنسبة لأعلى عنصر (زي الصورة الثانية تماماً)
 const DominantDonut = ({ dominant }) => {
   const size = 210;
   const strokeWidth = 22;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   
-  // حساب المسافة الملونة من الدائرة
   const activeLength = (dominant.value / 100) * circumference;
 
   return (
     <div className="relative shrink-0 flex flex-col items-center justify-center w-[210px] h-[210px]">
       <svg width={size} height={size} className="absolute inset-0 transform -rotate-90">
         
-        {/* Track خلفي بلون هادئ نفس درجة العاطفة */}
         <circle
           cx={size / 2} cy={size / 2} r={radius}
           fill="none"
@@ -325,14 +318,13 @@ const DominantDonut = ({ dominant }) => {
           strokeWidth={strokeWidth}
         />
 
-        {/* الجزء النشط باللون الفاقع مع حواف مستقيمة حادة */}
         <motion.circle
           cx={size / 2} cy={size / 2} r={radius}
           fill="none"
           stroke={dominant.color}
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
-          strokeLinecap="butt" // حواف مستقيمة بالظبط زي الصورة
+          strokeLinecap="butt"
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: circumference - activeLength }}
           transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
@@ -340,25 +332,21 @@ const DominantDonut = ({ dominant }) => {
         />
       </svg>
 
-      {/* المحتوى الداخلي بالمنتصف */}
       <motion.div 
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.5 }}
         className="absolute inset-0 flex flex-col items-center justify-center text-center"
       >
-        {/* أيقونة أعلى نسبة بداخل دائرة صغيرة */}
         <div className={`w-9 h-9 rounded-full flex items-center justify-center mb-1.5 ${dominant.badgeBg} border border-white/10`}>
           <dominant.Icon className={`w-5 h-5 ${dominant.iconColor}`} />
         </div>
 
-        {/* النسبة المئوية */}
         <div className="text-[38px] leading-none font-bold text-white tracking-tighter mb-0.5">
           <AnimatedNumber value={dominant.value} delay={0.2} duration={1.5} />
           <span className="text-xl text-white/80 ml-0.5">%</span>
         </div>
 
-        {/* اسم النسبة الأعلى (Positive / Neutral / Negative) */}
         <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">
           {dominant.label}
         </span>
@@ -367,7 +355,6 @@ const DominantDonut = ({ dominant }) => {
   );
 };
 
-// حاوية البارات
 const ResultBars = ({ items }) => {
   return (
     <div className="w-full flex-1 flex flex-col gap-6 justify-center">
@@ -378,7 +365,6 @@ const ResultBars = ({ items }) => {
   );
 };
 
-// البار الفردي
 const SentimentRow = ({ item, delay }) => {
   return (
     <div className="w-full">
@@ -392,9 +378,8 @@ const SentimentRow = ({ item, delay }) => {
         </div>
       </div>
 
-      {/* Track البار */}
+      {/* Track  */}
       <div className="relative w-full h-3.5 rounded-full bg-[#0B0918] overflow-hidden border border-white/[0.03] shadow-inner">
-        {/* تعبئة البار المتحركة */}
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${item.value}%` }}
@@ -402,7 +387,7 @@ const SentimentRow = ({ item, delay }) => {
           className={`absolute top-0 left-0 h-full rounded-full bg-gradient-to-r ${item.gradient} relative overflow-hidden`}
           style={{ boxShadow: `0 0 12px ${item.glowColor}` }}
         >
-          {/* لمعة متحركة (Shimmer) */}
+          {/*(Shimmer) */}
           <motion.div
             animate={{ x: ["-100%", "200%"] }}
             transition={{ duration: 2.5, repeat: Infinity, ease: "linear", delay: delay + 1 }}
