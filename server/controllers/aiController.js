@@ -12,15 +12,17 @@ export const generateIdeas = async (req, res) => {
   console.log("🔥 generateIdeas called");
 
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
+    const keysToTry = [
+      process.env.GEMINI_API_KEY,
+      process.env.CONTENT_GENERATOR,
+    ].filter(Boolean);
+
+    if (keysToTry.length === 0) {
       return res.status(500).json({
         success: false,
         message: "GEMINI_API_KEY not found",
       });
     }
-
-    const ai = new GoogleGenAI({ apiKey });
 
     const {
       channelName,
@@ -111,16 +113,15 @@ JSON SCHEMA:
 }
 `;
 
-    const modelsToTry = ["gemini-3.8-flash", "gemini-3.8-flash"];
-
     let response;
     let lastError;
 
-    for (const modelName of modelsToTry) {
+    for (const currentKey of keysToTry) {
       try {
+        const currentAi = new GoogleGenAI({ apiKey: currentKey });
         response = await withTimeout(
-          ai.models.generateContent({
-            model: modelName,
+          currentAi.models.generateContent({
+            model: "gemini-3.8-flash",
             contents: prompt,
             config: {
               responseMimeType: "application/json",
@@ -128,12 +129,12 @@ JSON SCHEMA:
               thinkingConfig: { thinkingBudget: 0 },
             },
           }),
-          9000
+          25000
         );
         break;
       } catch (e) {
         lastError = e;
-        console.warn(`Attempt on ${modelName} failed:`, e?.message);
+        console.warn("Attempt failed, trying fallback...", e?.message);
       }
     }
 
