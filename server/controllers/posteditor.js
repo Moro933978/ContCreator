@@ -152,7 +152,7 @@ const callGeminiAI = async (prompt) => {
             thinkingConfig: { thinkingBudget: 0 },
           },
         }),
-        20000
+        45000
       );
       break;
     } catch (e) {
