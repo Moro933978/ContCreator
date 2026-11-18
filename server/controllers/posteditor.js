@@ -120,18 +120,18 @@ Return ONLY the JSON object.
 };
 
 /* =========================================================
-   Call Gemini with Smart Retry & Fallback for 503 Errors
+   Call Gemini with Stable Models & Smart Retry
 ========================================================= */
 
 const callGeminiAI = async (prompt) => {
   const primaryKey = process.env.Post_Editor || process.env.GEMINI_API_KEY || process.env.VIRAL_METER_API;
   const backupKey = process.env.GEMINI_API_KEY || primaryKey;
 
-  // محاولات متعددة مع إعادة المحاولة التلقائية لو حصل ضغط (503)
+  // استخدام موديلات مستقرة (2.0-flash و 1.5-flash) لتجنب أخطاء الضغط والـ 503
   const attempts = [
-    { key: primaryKey, model: "gemini-3.8-flash" },
-    { key: backupKey, model: "gemini-3.8-flash" },
-    { key: primaryKey, model: "gemini-3.8-flash" }, // محاولة تالتة إضافية للضغط
+    { key: primaryKey, model: "gemini-2.0-flash" },
+    { key: backupKey, model: "gemini-1.5-flash" },
+    { key: primaryKey, model: "gemini-1.5-flash" },
   ].filter((item) => Boolean(item.key));
 
   if (attempts.length === 0) {
@@ -152,7 +152,6 @@ const callGeminiAI = async (prompt) => {
           config: {
             temperature: 0.7,
             responseMimeType: "application/json",
-            thinkingConfig: { thinkingBudget: 0 },
           },
         }),
         50000 // 50 ثانية مهلة لكل محاولة
@@ -160,14 +159,14 @@ const callGeminiAI = async (prompt) => {
       if (response) break;
     } catch (e) {
       lastError = e;
-      console.warn(`PostEditor attempt ${i + 1} failed:`, e?.message);
-      // انتظار 1.5 ثانية قبل إعادة المحاولة لتخفيف الضغط
+      console.warn(`PostEditor attempt ${i + 1} on [${attempt.model}] failed:`, e?.message);
+      // انتظار 1.5 ثانية قبل تجربة الموديل التالي
       await new Promise((resolve) => setTimeout(resolve, 1500));
     }
   }
 
   if (!response) {
-    throw new Error(lastError?.message || "Gemini servers are busy due to high demand. Please try again in a moment.");
+    throw new Error(lastError?.message || "Gemini servers are busy. Please try again.");
   }
 
   const content = typeof response?.text === "string" ? response.text.trim() : "";
@@ -410,5 +409,5 @@ ${safeJsonStringify(suggestion)}
       success: false,
       message: error.message || "Failed to apply suggestion.",
     });
-  }
+  } 
 };
