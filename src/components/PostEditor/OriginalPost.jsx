@@ -181,10 +181,9 @@ export default function OriginalPostCard({
 
     const controller = new AbortController();
 
-    // تم زيادة الـ Timeout إلى 60 ثانية لتجنب قطع الاتصال أثناء معالجة الذكاء الاصطناعي
     const timeoutId = setTimeout(() => {
       controller.abort();
-    }, 60000);
+    }, 120000);
 
     try {
       const payload = {
