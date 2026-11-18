@@ -120,17 +120,17 @@ Return ONLY the JSON object.
 };
 
 /* =========================================================
-   Call Gemini with gemini-2.0-flash & Smart Retry
+   Call Gemini with gemini-3.8-flash (As Requested by Google API)
 ========================================================= */
 
 const callGeminiAI = async (prompt) => {
   const primaryKey = process.env.Post_Editor || process.env.GEMINI_API_KEY || process.env.VIRAL_METER_API;
   const backupKey = process.env.GEMINI_API_KEY || primaryKey;
 
-  // الاعتماد حصراً على gemini-2.0-flash المعتمد والنشط
+  // الاعتماد حصراً على الموديل الرسمي المطلّوب gemini-3.8-flash
   const attempts = [
-    { key: primaryKey, model: "gemini-2.0-flash" },
-    { key: backupKey, model: "gemini-2.0-flash" },
+    { key: primaryKey, model: "gemini-3.8-flash" },
+    { key: backupKey, model: "gemini-3.8-flash" },
   ].filter((item) => Boolean(item.key));
 
   if (attempts.length === 0) {
