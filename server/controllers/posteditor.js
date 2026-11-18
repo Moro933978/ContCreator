@@ -120,18 +120,17 @@ Return ONLY the JSON object.
 };
 
 /* =========================================================
-   Call Gemini with Stable Models & Smart Retry
+   Call Gemini with gemini-2.0-flash & Smart Retry
 ========================================================= */
 
 const callGeminiAI = async (prompt) => {
   const primaryKey = process.env.Post_Editor || process.env.GEMINI_API_KEY || process.env.VIRAL_METER_API;
   const backupKey = process.env.GEMINI_API_KEY || primaryKey;
 
-  // استخدام موديلات مستقرة (2.0-flash و 1.5-flash) لتجنب أخطاء الضغط والـ 503
+  // الاعتماد حصراً على gemini-2.0-flash المعتمد والنشط
   const attempts = [
     { key: primaryKey, model: "gemini-2.0-flash" },
-    { key: backupKey, model: "gemini-1.5-flash" },
-    { key: primaryKey, model: "gemini-1.5-flash" },
+    { key: backupKey, model: "gemini-2.0-flash" },
   ].filter((item) => Boolean(item.key));
 
   if (attempts.length === 0) {
@@ -154,13 +153,12 @@ const callGeminiAI = async (prompt) => {
             responseMimeType: "application/json",
           },
         }),
-        50000 // 50 ثانية مهلة لكل محاولة
+        50000 // 50 ثانية مهلة
       );
       if (response) break;
     } catch (e) {
       lastError = e;
-      console.warn(`PostEditor attempt ${i + 1} on [${attempt.model}] failed:`, e?.message);
-      // انتظار 1.5 ثانية قبل تجربة الموديل التالي
+      console.warn(`PostEditor attempt ${i + 1} failed:`, e?.message);
       await new Promise((resolve) => setTimeout(resolve, 1500));
     }
   }
